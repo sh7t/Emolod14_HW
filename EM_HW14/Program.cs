@@ -21,6 +21,9 @@ namespace EM_HW14
             return journey*journeyRate + downtime*downtimeRate;
         }
 
+        // 3.
+        // -----
+
         static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
