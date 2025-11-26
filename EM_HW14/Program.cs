@@ -1,146 +1,123 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace EM_HW14
 {
+    public abstract class CustomRandom
+    {
+        private static Random random = new Random();
+
+        public static int Next(int min, int max)
+        {
+            return random.Next(min, max);
+        }
+    }
+
     internal class Program
     {
-        // 1.
-        // -----
 
-        // 2.
-        public static int CalculateTaxiJourney(int journey, int downtime)
+        static int[] CreateRandomIntArray(int length, int min, int max)
         {
-            int journeyRate = 10;
-            int downtimeRate = 1;
+            int[] array = new int[length];
+            
+            for (int i = 0; i < array.Length;  i++)
+            {
+                array[i] = CustomRandom.Next(min, max);
+            }
 
-            return journey*journeyRate + downtime*downtimeRate;
+            return array;
+        }
+        
+        static int[][] CreateRandomInt2DArray(int length, int min, int max)
+        {
+            int[][] array = new int[length][];
+
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = CreateRandomIntArray(length, min, max);
+            }
+
+            return array;
         }
 
-        // 3.
-        // -----
+        static int IntInput(string message)
+        {
+            Console.WriteLine(message);
+            return Convert.ToInt32(Console.ReadLine());
+        }
+        static string StrInput(string message)
+        {
+            Console.WriteLine(message);
+            return Console.ReadLine();
+        }
+        static void ShowError(string message)
+        {
+            Console.WriteLine("Помилка: " + message);
+        }
+
+
 
         static void Main(string[] args)
         {
+            
+
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.Unicode;
             Random random = new Random();
 
-            // 1.
 
+
+            // 1.
 
             /*
             try
             {
-                double firstNumber = 0;
-                char operation = ' ';
-                double secondNumber = 0;
-                double result = 0;
+                const int LENGTH = 10, MIN = 10, MAX = 99;
+                int inRangeCounter = 0, divisionCounter = 0;
 
+                int[][] array = CreateRandomInt2DArray(LENGTH, MIN, MAX);
 
-                Console.WriteLine("Додавання: +\nВіднімання: -\nМноження: *\nДілення: /\nКвадратний арифметичний корінь: √(Alt+251)\nПіднесення до степеня: ^\n");
-                Console.WriteLine("Введіть перше число: ");
-                firstNumber = Convert.ToDouble(Console.ReadLine());
+                int rangeMin = IntInput("Введіть мінімальму межу діапазону пошуку: ");
+                int rangeMax = IntInput("Введіть максимальну межу діапазону пошуку: ");
 
-                Console.WriteLine("Введіть операцію, яку потрібно провести з цими числами: ");
-                operation = Convert.ToChar(Console.ReadLine());
-
-                if (operation != '√')
+                for (int i = 0; i < LENGTH; i++)
                 {
-                    Console.WriteLine("Введіть друге число: ");
-                    secondNumber = Convert.ToDouble(Console.ReadLine());
+                    for (int j = 0; j < LENGTH; j++)
+                    {
+                        if (array[i][j] >= rangeMin && array[i][j] <= rangeMax) { inRangeCounter++; }
+                        if (array[i][j] % 5 == 0) { divisionCounter++; }
+                    }
                 }
 
 
-                switch(operation)
-                {
-                    case '+':
-                        result = firstNumber + secondNumber;
-                        break;
-
-                    case '-':
-                        result = firstNumber - secondNumber;
-                        break;
-
-                    case '*':
-                        result = firstNumber * secondNumber;
-                        break;
-
-                    case '/':
-                        if (secondNumber == 0){ throw new Exception("Неможливо поділити на нуль."); }
-                        result = firstNumber / secondNumber; 
-                        break;
-
-                    case '√':
-                        result = Math.Sqrt(firstNumber);
-                        break;
-
-                    case '^':
-                        if (secondNumber < 0) { throw new Exception("Не можна піднести число до від'ємного степеню."); } // до речі це неправда
-                        result = Math.Pow(firstNumber, secondNumber);
-                        break;
-
-                    default:
-                        throw new Exception("Обрано нерегламентовану операцію.");
-                }
-                if (operation != '√')
-                {
-                    Console.WriteLine($"\nРезультат розрахунків {firstNumber} {operation} {secondNumber} = {result}");
-                }
-                else
-                {
-                    Console.WriteLine($"Результат розрахунків\n √{firstNumber} = {result}");
-                }
+                Console.WriteLine($"Кількість елементів двовимірного масиву, які знаходяться у вказаному Вами діапазоні: {inRangeCounter}\nА також елементів, що кратні 5: {divisionCounter}");
             }
-            catch(FormatException)
+            catch (FormatException)
             {
-                Console.WriteLine("Помилка: Ви ввели неправильні дані або дані не того типу.");
+                ShowError("Ви не ввели дані або ввели дані неправильного типу.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Помилка: " + ex.Message);
+                ShowError(ex.Message);
             }
             */
 
             // 2.
 
             /*
-            try
-            {
-                int journey = 0;
-                int downtime = 0;
-                int summary = 0;
+            const int LENGTH = 100, MIN = 100, MAX = 900;
 
-                Console.WriteLine("Введіть відстань, на яку Вас повинно довести таксі у кілометрах: ");
-                journey = Convert.ToInt32(Console.ReadLine());
-                if (journey <= 0) { throw new Exception("Неможлива відстань поїздки."); }
+            int[] array = CreateRandomIntArray(LENGTH, MIN, MAX);
+            Array.Sort(array);
 
-                Console.WriteLine("Введіть час простою у хвилинах: ");
-                downtime = Convert.ToInt32(Console.ReadLine());
-                if (downtime < 0) { throw new Exception("Неможливий час простою."); }
-
-                summary = CalculateTaxiJourney(journey, downtime);
-
-                if (summary < 50)
-                {
-                    Console.WriteLine($"\nВаша поїздка коштує {summary} грн. Приміняється мінімальний тариф на поїздку(50 грн.)\n");
-                    summary = 50;
-                }
-
-                Console.WriteLine("Остаточна вартість Вашої поїздки на таксі з вказаною відстаню поїздки та часом простою: " + summary + " грн.");
-            }
-            catch (FormatException)
-            {
-                Console.WriteLine("Помилка: Ви ввели неправильні дані або дані не того типу.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Помилка: " + ex.Message);
-            }
+            Console.WriteLine($"Друге найбільше число у масиві з 100 випадкових елементів це {array[array.Length - 2]}.");
             */
 
             // 3.
@@ -148,29 +125,48 @@ namespace EM_HW14
             /*
             try
             {
-                double consumption = 0;
-                double cost = 0;
+                string input = StrInput("Введіть речення: ").ToLower();
+                if (input.Trim().Length == 0) { throw new Exception("Ви не ввели текст."); }
 
-                Console.WriteLine("Введіть спожиту Вами електроенергію для розрахунку її вартості(у кВ/год.): ");
-                consumption = Convert.ToDouble(Console.ReadLine());
-                if (consumption <= 0) { throw new Exception("Введено неможливе значення спожитої електроенергії."); }
+                Dictionary<char, int> dict = new Dictionary<char, int>();
 
-                if (consumption <= 100) { cost = consumption * 1.44; }
-                else if (consumption <= 600) { cost = consumption * 1.68; }
-                else { cost = consumption * 1.92; }
+                foreach (char c in input)
+                {
+                    if (dict.ContainsKey(c)) { dict[c]++; }
+                    else { dict[c] = 1; }
+                }
 
-                Console.WriteLine($"Розрахована для Вас вартість спожитої Вами електроенергії({consumption} кВ/год.): {cost} грн.");
-
-            }
-            catch (FormatException)
-            {
-                Console.WriteLine("Помилка: Ви ввели неправильні дані або дані не того типу.");
+                foreach (var item in dict)
+                {
+                    Console.WriteLine($"\'{item.Key}\': {item.Value}");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Помилка: " + ex.Message);
+                ShowError(ex.Message);
             }
             */
+
+            // 4.
+
+            const int LENGTH = 20, MIN = 10, MAX = 100;
+
+            int[] array = CreateRandomIntArray(LENGTH, MIN, MAX);
+            int daBiggestResult = 0;
+            int daBestMiddleIndex = 0;
+
+            for (int i = 1; i < 18; i++)
+            {
+                if (array[i - 1] + array[i] + array[i + 1] > daBiggestResult)
+                {
+                    daBestMiddleIndex = i;
+                    daBiggestResult = array[i - 1] + array[i] + array[i + 1];
+                }
+            }
+
+            Console.WriteLine($"[{daBestMiddleIndex-1}] + [{daBestMiddleIndex}] + [{daBestMiddleIndex+1}] = " +
+                $"{array[daBestMiddleIndex - 1]} + {array[daBestMiddleIndex]} + {array[daBestMiddleIndex + 1]}");
+            Console.WriteLine("Найбільша сума з підмасивів рівна " + daBiggestResult);
 
         }
     }
