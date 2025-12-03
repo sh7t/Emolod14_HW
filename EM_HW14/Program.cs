@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -18,86 +20,261 @@ namespace EM_HW14
         {
             return random.Next(min, max);
         }
+        public static int Next(int max)
+        {
+            return random.Next(max);
+        }
+    }
+
+    public abstract class ListService
+    {
+        private static List<string> _list = new List<string>() // з мейна - ніяк, бо приватна, конструктор - ніяк, бо статік, отже хардкод
+            { "COBAL", "ALGOL", "Fortrun", // просто додав деякі дані для наглядності
+              "Lisp", "Swift", "GOlang", "B"
+            };
+
+        private static char[] uppers = new char[]
+            {
+                'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+                'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+            };
+
+        private static char[] lowers = new char[]
+        {
+                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+                'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+        };
+
+        private static char[] digits = new char[]
+        {
+                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        };
+
+        private static char[] specials = new char[]
+        {
+                '-', '_', '=', '+', '|', '!', '@', '#', '$', '%',
+                '^', '&', '*', ';', ':', '<', '>', '/', '?', '~',
+        };
+
+        // ----------------------------------------------------
+
+        private static void CheckString(string str)
+        {
+            if (str.Trim().Length <= 0) { throw new Exception("Неможливо додати пустий рядок до списку."); }
+        }
+        private static void CheckIndex(byte index)
+        {
+            if (index >= _list.Count || index < 0) { throw new Exception($"Неможливо знайти елемент з введеним індексом({index})"); }
+        }
+
+        // ----------------------------------------------------
+
+        public static void Add(string str) // не сподобалася назва "Create"
+        {
+            CheckString(str);
+            _list.Add(str);
+        }
+        public static string ReadAt(byte index)
+        {
+            CheckIndex(index);
+            return _list[index];
+        }
+        public static string[] ReadAll()
+        {
+            return _list.ToArray();
+        }
+        public static void ShowAll()
+        {
+            if (_list.Count == 0)
+            {
+                throw new Exception("Неможливо вивести пустий список.");
+            }
+
+            Console.WriteLine(string.Join(", ", _list));
+
+        }
+        public static void UpdateAt(byte index, string str)
+        {
+            CheckIndex(index);
+            CheckString(str);
+            _list[index] = str;
+        }
+        public static void DeleteAt(byte index)
+        {
+            CheckIndex(index);
+            _list.RemoveAt(index);
+        }
+
+        // ----------------------------------------------------
+
+        public static string GenerateString(int length, bool useLowers = true, bool useUppers = false, bool useDigits = false, bool useSpecials = false)
+        {
+            string str = "";
+            List<char> range = new List<char>();
+
+            if (useUppers) { range.AddRange(uppers); }
+            if (useDigits) { range.AddRange(digits); }
+            if (useSpecials) { range.AddRange(specials); }
+            if (useLowers || range.Count == 0) { range.AddRange(lowers); }
+
+            for (int i = 0; i < length; i++)
+            {
+                str += range[CustomRandom.Next(0, range.Count)];
+            }
+
+            return str;
+        }
+    }
+
+    public abstract class DictionaryService
+    {
+        public static Dictionary<string, string> _dict = new Dictionary<string, string>() // з мейна - ніяк, бо приватна, конструктор - ніяк, бо статік, отже хардкор
+            {
+                { "Linus Torvalds", "+380991114242" },
+                { "Tim Patterson", "+380992224242" },
+                { "Richard Stallman", "+380993334242" },
+                { "Ken Thompson", "+380993334242" },
+            };
+
+        // ----------------------------------------------------
+
+        private static void CheckStrings(string key, string value)
+        {
+            if (key.Trim().Length <= 0 || value.Trim().Length <= 0) { throw new Exception("Неможливо додати пустий рядок до словнику."); }
+        }
+        private static void CheckKey(string key)
+        {
+            if (!(_dict.ContainsKey(key))) { throw new Exception($"Неможливо знайти елемент з введеним ключем(\"{ key }\")."); }
+        }
+
+        // ----------------------------------------------------
+
+        public static void Add(string key, string value) // не сподобалася назва "Create"
+        {
+            CheckStrings(key, value);
+
+            if (value.Length != 14 || !(value.Contains("+"))) { Console.WriteLine("Номер введено невірно або в неправильному форматі!"); }
+            else { _dict.Add(key, value); }
+        }
+        public static void Delete(string key)
+        {
+            CheckKey(key);
+            _dict.Remove(key);
+        }
+        public static void ShowAll() // на відміну від списків в мене не вийшло "позбутися" дженеріка, тому метод нічого не повертає і працює для райтлайну
+        {
+            if (_dict.Count == 0)
+            {
+                throw new Exception("Неможливо вивести пустий словник.");
+            }
+
+            foreach (KeyValuePair<string, string> item in _dict)
+            {
+                Console.WriteLine(item.Key + ": " + item.Value);
+            }
+        }
     }
 
     internal class Program
     {
-
-        static int[] CreateRandomIntArray(int length, int min, int max)
-        {
-            int[] array = new int[length];
-            
-            for (int i = 0; i < array.Length;  i++)
-            {
-                array[i] = CustomRandom.Next(min, max);
-            }
-
-            return array;
-        }
-        
-        static int[][] CreateRandomInt2DArray(int length, int min, int max)
-        {
-            int[][] array = new int[length][];
-
-            for (int i = 0; i < array.Length; i++)
-            {
-                array[i] = CreateRandomIntArray(length, min, max);
-            }
-
-            return array;
-        }
-
-        static int IntInput(string message)
+        static int IntegerInput(string message)
         {
             Console.WriteLine(message);
             return Convert.ToInt32(Console.ReadLine());
         }
-        static string StrInput(string message)
+        static int IntegerInput(string message, string errorMessage)
+        {
+            Console.WriteLine(message);
+            int integer = Convert.ToInt32(Console.ReadLine());
+            if (integer <= 0) { throw new Exception(errorMessage); }
+            return integer;
+        }
+        static string StringInput(string message)
         {
             Console.WriteLine(message);
             return Console.ReadLine();
+        }
+        static string StringInput(string message, string errorMessage)
+        {
+            Console.WriteLine(message);
+            string str = Convert.ToString(Console.ReadLine());
+            if (str.Trim().Length == 0) { throw new Exception(errorMessage); }
+            return str;
         }
         static void ShowError(string message)
         {
             Console.WriteLine("Помилка: " + message);
         }
-
-
+        static void ShowSeparator()
+        {
+            Console.WriteLine("-=============================-");
+        }
+        static bool YesOrNo(string message)
+        {
+            ShowSeparator();
+            byte attempts = 5; 
+            for (int i = 0; i < attempts; i++)
+            {
+                Console.WriteLine(message + "(y/n)");
+                char input = Convert.ToChar(Console.ReadLine());
+                if (input == 'y') { return true; }
+                else if(input == 'n') { return false; }
+            }
+            throw new Exception("Кількість спроб на відповідь вичерпано.");
+        }
 
         static void Main(string[] args)
         {
-            
-
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.Unicode;
-            Random random = new Random();
 
-
-
-            // 1.
+            // 1+2.
 
             /*
             try
             {
-                const int LENGTH = 10, MIN = 10, MAX = 99;
-                int inRangeCounter = 0, divisionCounter = 0;
+                bool useLowers = true, useUppers = false, useDigits = false, useSpecials = false;
 
-                int[][] array = CreateRandomInt2DArray(LENGTH, MIN, MAX);
+                int length = IntegerInput("Введіть довжину згенерованого слова: ", "Довжина слова не може бути недодатньою.");
+                useLowers = YesOrNo("За замовчуванням використовуються тільки маленькі літери англійського алфавіту!\nВикористовувати маленькі літери англійського алфавіту під час генерації?");
+                useUppers = YesOrNo("Використовувати великі літери англійського алфавіту під час генерації?");
+                useDigits = YesOrNo("Використовувати цифри під час генерації?");
+                useSpecials = YesOrNo("Використовувати спеціальні символи під час генерації?");
 
-                int rangeMin = IntInput("Введіть мінімальму межу діапазону пошуку: ");
-                int rangeMax = IntInput("Введіть максимальну межу діапазону пошуку: ");
+                ShowSeparator();
+                int iterations = IntegerInput("Введіть бажану кількість згенерованих слів: ", "Кількість слів не може бути недодатньою.");
+                ShowSeparator();
 
-                for (int i = 0; i < LENGTH; i++)
+                for (int i = 0; i < iterations; i++)
                 {
-                    for (int j = 0; j < LENGTH; j++)
-                    {
-                        if (array[i][j] >= rangeMin && array[i][j] <= rangeMax) { inRangeCounter++; }
-                        if (array[i][j] % 5 == 0) { divisionCounter++; }
-                    }
+                    ListService.Add(ListService.GenerateString(length, useLowers, useUppers, useDigits, useSpecials));
                 }
+                Console.Write("Список разом з нещодавно згенерованими словами: ");
+                ListService.ShowAll();
+            }
+            catch (FormatException)
+            {
+                ShowError("Ви не ввели дані або ввели дані неправильного типу.");
+            }
+            catch (IndexOutOfRangeException)
+            {
+                ShowError("Значення індексу вийшло за область допустимих значень.");
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex.Message);
+            }
+            */
 
+            // 3. 
 
-                Console.WriteLine($"Кількість елементів двовимірного масиву, які знаходяться у вказаному Вами діапазоні: {inRangeCounter}\nА також елементів, що кратні 5: {divisionCounter}");
+            try
+            {
+                DictionaryService.Add("Oleksandr Radionov", "+3801234567890");
+                DictionaryService.ShowAll();
+                ShowSeparator();
+                DictionaryService.Delete("Oleksandr Radionov");
+                DictionaryService.ShowAll();
             }
             catch (FormatException)
             {
@@ -107,67 +284,6 @@ namespace EM_HW14
             {
                 ShowError(ex.Message);
             }
-            */
-
-            // 2.
-
-            /*
-            const int LENGTH = 100, MIN = 100, MAX = 900;
-
-            int[] array = CreateRandomIntArray(LENGTH, MIN, MAX);
-            Array.Sort(array);
-
-            Console.WriteLine($"Друге найбільше число у масиві з 100 випадкових елементів це {array[array.Length - 2]}.");
-            */
-
-            // 3.
-
-            /*
-            try
-            {
-                string input = StrInput("Введіть речення: ").ToLower();
-                if (input.Trim().Length == 0) { throw new Exception("Ви не ввели текст."); }
-
-                Dictionary<char, int> dict = new Dictionary<char, int>();
-
-                foreach (char c in input)
-                {
-                    if (dict.ContainsKey(c)) { dict[c]++; }
-                    else { dict[c] = 1; }
-                }
-
-                foreach (var item in dict)
-                {
-                    Console.WriteLine($"\'{item.Key}\': {item.Value}");
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowError(ex.Message);
-            }
-            */
-
-            // 4.
-
-            const int LENGTH = 20, MIN = 10, MAX = 100;
-
-            int[] array = CreateRandomIntArray(LENGTH, MIN, MAX);
-            int daBiggestResult = 0;
-            int daBestMiddleIndex = 0;
-
-            for (int i = 1; i < 18; i++)
-            {
-                if (array[i - 1] + array[i] + array[i + 1] > daBiggestResult)
-                {
-                    daBestMiddleIndex = i;
-                    daBiggestResult = array[i - 1] + array[i] + array[i + 1];
-                }
-            }
-
-            Console.WriteLine($"[{daBestMiddleIndex-1}] + [{daBestMiddleIndex}] + [{daBestMiddleIndex+1}] = " +
-                $"{array[daBestMiddleIndex - 1]} + {array[daBestMiddleIndex]} + {array[daBestMiddleIndex + 1]}");
-            Console.WriteLine("Найбільша сума з підмасивів рівна " + daBiggestResult);
-
         }
     }
 }
