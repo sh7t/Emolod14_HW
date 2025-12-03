@@ -1,14 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.ExceptionServices;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace EM_HW14
 {
@@ -268,8 +260,10 @@ namespace EM_HW14
 
             // 3. 
 
+            /*
             try
             {
+                // просто функціонал створеного класу...
                 DictionaryService.Add("Oleksandr Radionov", "+3801234567890");
                 DictionaryService.ShowAll();
                 ShowSeparator();
@@ -284,6 +278,7 @@ namespace EM_HW14
             {
                 ShowError(ex.Message);
             }
+            */
         }
     }
 }
