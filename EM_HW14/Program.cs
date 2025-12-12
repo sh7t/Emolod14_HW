@@ -1,13 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Security.Policy;
 using System.Text;
+using static EM_HW14.Book;
 
 namespace EM_HW14
 {
-    public abstract class CustomRandom
+    public static class ConsoleHelper
     {
+        // funcs
+        public static string StringInput(string message)
+        {
+            Console.WriteLine(message);
+            return Console.ReadLine().Trim();
+        }
+        public static string StringInput(string message, string errorMessage)
+        {
+            string str = StringInput(message);
+            if (str.Trim().Length == 0) { throw new Exception(errorMessage); }
+            return str;
+        }
+        public static int IntegerInput(string message)
+        {
+            return Convert.ToInt32(StringInput(message));
+        }
+        public static void ShowError(string message)
+        {
+            Console.WriteLine("Error: " + message);
+        }
+        public static void ShowSeparator()
+        {
+            Console.WriteLine("-=============================-");
+        }
+    }
+    public static class CustomRandom
+    {
+        // fields
         private static Random random = new Random();
 
+        // funcs
         public static int Next(int min, int max)
         {
             return random.Next(min, max);
@@ -18,267 +52,166 @@ namespace EM_HW14
         }
     }
 
-    public abstract class ListService
+    public class Book
     {
-        private static List<string> _list = new List<string>() // з мейна - ніяк, бо приватна, конструктор - ніяк, бо статік, отже хардкод
-            { "COBAL", "ALGOL", "Fortrun", // просто додав деякі дані для наглядності
-              "Lisp", "Swift", "GOlang", "B"
-            };
+        // fields
+        private static int autoInc = 0;
+        private readonly int id;
+        private string title = "";
+        private string author = "";
+        private int year = 0;
+        private bool isAvailable = false;
 
-        private static char[] uppers = new char[]
+        // init
+        public Book(string title, string author, int year, bool isAvailable)
+        {
+            this.id = autoInc++;
+
+            setTitle(title);
+            setAuthor(author);
+            setYear(year);
+            setIsAvailable(isAvailable);
+        }
+
+        // get-set'ters
+        public int getId() => id;
+
+        public string getTitle() => title;
+        public void setTitle(string title)
+        {
+            if (title.Trim().Length < 2)
+                throw new Exception("Expected longer title. Entered information is too short.");
+            this.title = title.Trim();
+        }
+
+        public string getAuthor() => author;
+        public void setAuthor(string author)
+        {
+            if (author.Trim().Length < 3)
+                throw new Exception("Expected longer author's name. Entered information is too short.");
+            this.author = author.Trim();
+        }
+
+        public int getYear() => year;
+        public void setYear(int year)
+        {
+            if (year > DateTime.Now.Year)
+                throw new Exception("Expected real year. Entered year \"" + year + "\" isn't real yet.");
+            this.year = year;
+        }
+
+        public bool getIsAvailable() => isAvailable;
+        public void setIsAvailable(bool isAvailable) { this.isAvailable = isAvailable; }
+    }
+    public static class LibraryService
+    {
+        // fields
+        private static List<Book> library = new List<Book>();
+        private static List<Book> userLibrary = new List<Book>();
+
+        // funcs
+        private static void CheckLibraryEmptiness(List<Book> lib)
+        {
+            if (lib.Count == 0)
+                throw new Exception("Library is empty at the moment. Come back later!");
+        }
+        private static void CheckLibraryEmptiness(List<Book> lib, string errorMessage)
+        {
+            if (lib.Count == 0)
+                throw new Exception(errorMessage);
+        }
+        private static void CheckIsIdInRange(List<Book> lib, int id)
+        {
+            if (library.Find(b => b.getId() == id) == null)
+                throw new Exception("Entered ID is out of library's range!");
+        }
+        private static int GetIndexById(List<Book> lib, int id)
+        {
+            CheckLibraryEmptiness(lib);
+            CheckIsIdInRange(lib, id);
+            return lib.FindIndex(book => book.getId() == id);
+        }
+        private static int GetIndexById(List<Book> lib, int id, string errorMessage)
+        {
+            CheckLibraryEmptiness(lib, errorMessage);
+            CheckIsIdInRange(lib, id);
+            return lib.FindIndex(book => book.getId() == id);
+        }
+
+        public static void AddBook(Book book)
+        {
+            if ((library.Find(inLib => inLib.getTitle().ToLower() == book.getTitle().ToLower())) != null)
+                throw new Exception($"{book.getTitle()} by {book.getAuthor()} is already in library!");
+            library.Add(book);
+            Console.WriteLine($"You successfully added {book.getTitle()} by {book.getAuthor()}!");
+        }
+
+        public static void ShowLibraryBooks()
+        {
+            CheckLibraryEmptiness(library);
+
+            Console.WriteLine("ID   Book");
+            foreach (Book book in library)
             {
-                'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-                'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            };
-
-        private static char[] lowers = new char[]
-        {
-                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-                'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-        };
-
-        private static char[] digits = new char[]
-        {
-                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-        };
-
-        private static char[] specials = new char[]
-        {
-                '-', '_', '=', '+', '|', '!', '@', '#', '$', '%',
-                '^', '&', '*', ';', ':', '<', '>', '/', '?', '~',
-        };
-
-        // ----------------------------------------------------
-
-        private static void CheckString(string str)
-        {
-            if (str.Trim().Length <= 0) { throw new Exception("Неможливо додати пустий рядок до списку."); }
-        }
-        private static void CheckIndex(byte index)
-        {
-            if (index >= _list.Count || index < 0) { throw new Exception($"Неможливо знайти елемент з введеним індексом({index})"); }
-        }
-
-        // ----------------------------------------------------
-
-        public static void Add(string str) // не сподобалася назва "Create"
-        {
-            CheckString(str);
-            _list.Add(str);
-        }
-        public static string ReadAt(byte index)
-        {
-            CheckIndex(index);
-            return _list[index];
-        }
-        public static string[] ReadAll()
-        {
-            return _list.ToArray();
-        }
-        public static void ShowAll()
-        {
-            if (_list.Count == 0)
-            {
-                throw new Exception("Неможливо вивести пустий список.");
+                string availableOrNot = book.getIsAvailable() ? "Available" : "Unavailable";
+                Console.WriteLine($"{book.getId()} | {book.getTitle()} by {book.getAuthor()} ({book.getYear()}) - {availableOrNot}");
             }
-
-            Console.WriteLine(string.Join(", ", _list));
-
         }
-        public static void UpdateAt(byte index, string str)
+        public static void ShowLibraryBooks(List<Book> lib, string errorMessage)
         {
-            CheckIndex(index);
-            CheckString(str);
-            _list[index] = str;
-        }
-        public static void DeleteAt(byte index)
-        {
-            CheckIndex(index);
-            _list.RemoveAt(index);
-        }
+            CheckLibraryEmptiness(lib, errorMessage);
 
-        // ----------------------------------------------------
-
-        public static string GenerateString(int length, bool useLowers = true, bool useUppers = false, bool useDigits = false, bool useSpecials = false)
-        {
-            string str = "";
-            List<char> range = new List<char>();
-
-            if (useUppers) { range.AddRange(uppers); }
-            if (useDigits) { range.AddRange(digits); }
-            if (useSpecials) { range.AddRange(specials); }
-            if (useLowers || range.Count == 0) { range.AddRange(lowers); }
-
-            for (int i = 0; i < length; i++)
+            Console.WriteLine("ID   Book");
+            foreach (Book book in lib)
             {
-                str += range[CustomRandom.Next(0, range.Count)];
+                Console.WriteLine($"{book.getId()} | {book.getTitle()} by {book.getAuthor()} ({book.getYear()})");
             }
+        }
 
-            return str;
+        public static void LendBook(int id)
+        {
+            int index = GetIndexById(library, id);
+
+            if (!library[index].getIsAvailable())
+                throw new Exception($"Book, which ID is {id}, is unavailable for now. Come back later!");
+
+            userLibrary.Add(library[index]);
+            library[index].setIsAvailable(false);
+            Console.WriteLine($"You successfully lended {library[index].getTitle()} by {library[index].getAuthor()}!");
+        }
+
+        public static void ReturnBook(int id)
+        {
+            int index = GetIndexById(userLibrary, id, "Your library is empty at the moment. Come back later!");
+
+            if (index == -1)
+                throw new Exception($"There's no book in your library with ID {id}!");
+
+            library[library.FindIndex(book => userLibrary[index].getId() == book.getId())].setIsAvailable(true);
+            Console.WriteLine($"You successfully returned {userLibrary[index].getTitle()} by {userLibrary[index].getAuthor()}!");
+            userLibrary.RemoveAt(index);
+        }
+
+        public static void RemoveBook(int id)
+        {
+            int index = GetIndexById(library, id);
+            Console.WriteLine($"You successfully removed {library[index].getTitle()} by {library[index].getAuthor()}!");
+            library.RemoveAt(index);
         }
     }
 
-    public abstract class DictionaryService
-    {
-        public static Dictionary<string, string> _dict = new Dictionary<string, string>() // з мейна - ніяк, бо приватна, конструктор - ніяк, бо статік, отже хардкор
-            {
-                { "Linus Torvalds", "+380991114242" },
-                { "Tim Patterson", "+380992224242" },
-                { "Richard Stallman", "+380993334242" },
-                { "Ken Thompson", "+380993334242" },
-            };
-
-        // ----------------------------------------------------
-
-        private static void CheckStrings(string key, string value)
-        {
-            if (key.Trim().Length <= 0 || value.Trim().Length <= 0) { throw new Exception("Неможливо додати пустий рядок до словнику."); }
-        }
-        private static void CheckKey(string key)
-        {
-            if (!(_dict.ContainsKey(key))) { throw new Exception($"Неможливо знайти елемент з введеним ключем(\"{ key }\")."); }
-        }
-
-        // ----------------------------------------------------
-
-        public static void Add(string key, string value) // не сподобалася назва "Create"
-        {
-            CheckStrings(key, value);
-
-            if (value.Length != 14 || !(value.Contains("+"))) { Console.WriteLine("Номер введено невірно або в неправильному форматі!"); }
-            else { _dict.Add(key, value); }
-        }
-        public static void Delete(string key)
-        {
-            CheckKey(key);
-            _dict.Remove(key);
-        }
-        public static void ShowAll() // на відміну від списків в мене не вийшло "позбутися" дженеріка, тому метод нічого не повертає і працює для райтлайну
-        {
-            if (_dict.Count == 0)
-            {
-                throw new Exception("Неможливо вивести пустий словник.");
-            }
-
-            foreach (KeyValuePair<string, string> item in _dict)
-            {
-                Console.WriteLine(item.Key + ": " + item.Value);
-            }
-        }
-    }
 
     internal class Program
     {
-        static int IntegerInput(string message)
-        {
-            Console.WriteLine(message);
-            return Convert.ToInt32(Console.ReadLine());
-        }
-        static int IntegerInput(string message, string errorMessage)
-        {
-            Console.WriteLine(message);
-            int integer = Convert.ToInt32(Console.ReadLine());
-            if (integer <= 0) { throw new Exception(errorMessage); }
-            return integer;
-        }
-        static string StringInput(string message)
-        {
-            Console.WriteLine(message);
-            return Console.ReadLine();
-        }
-        static string StringInput(string message, string errorMessage)
-        {
-            Console.WriteLine(message);
-            string str = Convert.ToString(Console.ReadLine());
-            if (str.Trim().Length == 0) { throw new Exception(errorMessage); }
-            return str;
-        }
-        static void ShowError(string message)
-        {
-            Console.WriteLine("Помилка: " + message);
-        }
-        static void ShowSeparator()
-        {
-            Console.WriteLine("-=============================-");
-        }
-        static bool YesOrNo(string message)
-        {
-            ShowSeparator();
-            byte attempts = 5; 
-            for (int i = 0; i < attempts; i++)
-            {
-                Console.WriteLine(message + "(y/n)");
-                char input = Convert.ToChar(Console.ReadLine());
-                if (input == 'y') { return true; }
-                else if(input == 'n') { return false; }
-            }
-            throw new Exception("Кількість спроб на відповідь вичерпано.");
-        }
-
         static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.Unicode;
 
-            // 1+2.
+            // 1.
+            // from 54 to 200
 
-            /*
-            try
-            {
-                bool useLowers = true, useUppers = false, useDigits = false, useSpecials = false;
-
-                int length = IntegerInput("Введіть довжину згенерованого слова: ", "Довжина слова не може бути недодатньою.");
-                useLowers = YesOrNo("За замовчуванням використовуються тільки маленькі літери англійського алфавіту!\nВикористовувати маленькі літери англійського алфавіту під час генерації?");
-                useUppers = YesOrNo("Використовувати великі літери англійського алфавіту під час генерації?");
-                useDigits = YesOrNo("Використовувати цифри під час генерації?");
-                useSpecials = YesOrNo("Використовувати спеціальні символи під час генерації?");
-
-                ShowSeparator();
-                int iterations = IntegerInput("Введіть бажану кількість згенерованих слів: ", "Кількість слів не може бути недодатньою.");
-                ShowSeparator();
-
-                for (int i = 0; i < iterations; i++)
-                {
-                    ListService.Add(ListService.GenerateString(length, useLowers, useUppers, useDigits, useSpecials));
-                }
-                Console.Write("Список разом з нещодавно згенерованими словами: ");
-                ListService.ShowAll();
-            }
-            catch (FormatException)
-            {
-                ShowError("Ви не ввели дані або ввели дані неправильного типу.");
-            }
-            catch (IndexOutOfRangeException)
-            {
-                ShowError("Значення індексу вийшло за область допустимих значень.");
-            }
-            catch (Exception ex)
-            {
-                ShowError(ex.Message);
-            }
-            */
-
-            // 3. 
-
-            /*
-            try
-            {
-                // просто функціонал створеного класу...
-                DictionaryService.Add("Oleksandr Radionov", "+3801234567890");
-                DictionaryService.ShowAll();
-                ShowSeparator();
-                DictionaryService.Delete("Oleksandr Radionov");
-                DictionaryService.ShowAll();
-            }
-            catch (FormatException)
-            {
-                ShowError("Ви не ввели дані або ввели дані неправильного типу.");
-            }
-            catch (Exception ex)
-            {
-                ShowError(ex.Message);
-            }
-            */
+            // 2.
         }
     }
 }
