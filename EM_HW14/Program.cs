@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Security.Policy;
 using System.Text;
-using static EM_HW14.Book;
 
 namespace EM_HW14
 {
