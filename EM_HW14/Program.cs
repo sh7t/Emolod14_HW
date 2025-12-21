@@ -371,14 +371,7 @@ namespace EM_HW14
         {
             try
             {
-                GasStation gasStation = new GasStation("Gas4Ya",
-                    new Dictionary<Fuel, int> { { new Fuel("Fuel1", FuelType.A95, 45, 60), 20000 }, 
-                        { new Fuel("Fuel2", FuelType.A100, 45, 60), 20000 },
-                        { new Fuel("Fuel3", FuelType.Diesel, 45, 60), 20000 },
-                        { new Fuel("Fuel4", FuelType.Gas, 45, 60), 20000 }
-                    }); 
-                Car car = CarGenerator.GenerateCar();
-                gasStation.RefuelCar(car, 10);
+                // testing environment
             }
             catch (NullReferenceException)
             {
