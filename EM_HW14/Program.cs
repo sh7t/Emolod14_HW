@@ -1,11 +1,28 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace EM_HW14
 {
+    public enum FuelType
+    {
+        A95 = 0,
+        A100,
+        Gas,
+        Diesel
+    }
+    // // // // // // // // //
     public static class ConsoleHelper
     {
+        public static readonly string currency = "$";
         // funcs
+        public static void ChangeEncodingToUTF8()
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+            Console.InputEncoding = Encoding.UTF8;
+        }
         public static string StringInput(string message)
         {
             Console.WriteLine(message);
@@ -35,6 +52,18 @@ namespace EM_HW14
             Console.WriteLine("-=============================-");
         }
     }
+    public static class ValidationHelper
+    {
+        // funcs
+        public static bool IsPositive(int value) { return value > 0; }
+        public static bool IsNegative(int value) { return value < 0; }
+        public static bool IsNonPositive(int value) { return value <= 0; }
+        public static bool IsNonNegative(int value) { return value >= 0; }
+        public static void NullOrNot<T>(T value)
+        {
+            if (value == null) { throw new NullReferenceException("Null can't be a value here."); }
+        }
+    }
     public static class CustomRandom
     {
         // fields
@@ -50,319 +79,315 @@ namespace EM_HW14
             return random.Next(max);
         }
     }
-    /*
-    public class Book
+
+    public static class CarGenerator
+    {
+        private static string GenerateLicensePlate()
+        {
+            const string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+            // kludge
+            return $"{letters[CustomRandom.Next(letters.Length)]}" + $"{letters[CustomRandom.Next(letters.Length)]}" +
+                $"{CustomRandom.Next(10)}" + $"{CustomRandom.Next(10)}" + $"{CustomRandom.Next(10)}" + $"{CustomRandom.Next(10)}" +
+                $"{letters[CustomRandom.Next(letters.Length)]}" + $"{letters[CustomRandom.Next(letters.Length)]}";
+        }
+        private static string GenerateCarName()
+        {
+            List<string> carNames = new List<string>()
+            {
+                "Model X", "M5 F90", "Civic Type R", "Corolla GR", "Octavia RS", "Mustang GT", "Charger SRT", "Camry TRD", "Aventador SVJ", "Huracan EVO",
+                "911 Carrera", "Panamera GTS", "F-150 Raptor", "Ranger Raptor", "G63 AMG", "GLE 63 S", "Taycan Turbo", "i8 Roadster", "Supra A90",
+                "Stelvio Quadrifoglio", "Giulia Veloce", "Bronco Wildtrak", "Tucson N-Line", "Elantra N", "Veloster N", "Cayenne Turbo", "Macan GTS",
+                "X5 M", "X6 M", "M4 Competition", "M2 CS", "RS6 Avant", "RS7 Sportback", "S63 AMG", "E63 S", "Mustang Mach 1", "Camaro SS", 
+                "Challenger R/T", "Wrangler Rubicon", "Defender 110", "G-Class 63", "A4 Avant", "A6 Allroad", "Q8", "Touareg R", 
+                "XC90 T8", "Polestar 2", "Model 3 Performance", "Roadster 2023" 
+            };
+
+            return carNames[CustomRandom.Next(carNames.Count)];
+        }
+        private static int GenerateTankCapacity(int minTankCapacity = 35, int maxTankCapacity = 86)
+        {
+            return CustomRandom.Next(minTankCapacity, maxTankCapacity);
+        }
+        private static int GenerateTankFullness(int tankCapacity, int minTankFullnessPercentage = 3, int maxTankFullnessPercentage = 100)
+        {
+            return (int)(tankCapacity * (CustomRandom.Next(minTankFullnessPercentage, maxTankFullnessPercentage) / 100.0));
+        }
+        private static Fuel GenerateFuel()
+        {
+            List<string> fuelNames = new List<string>()
+            {
+                "Ignite", "Pulse", "Velocity", "Overdrive", "Momentum", "Kinetic", "Afterburn", "Throttle", "Boost", "PowerFlow", "PrimeFuel", 
+                "UltraFuel", "Elite", "Supreme", "Apex", "Vertex", "Summit", "Infinity", "Noble", "NeoFuel", "HyperFuel", "Quantum", "Flux", "Ion",
+                "Plasma", "Core", "Fusion", "PulseX", "Rapid", "Storm", "Blaze", "Ignition", "Rush", "VelocityX", "Fireline", "Redline", "Fastlane",
+                "EcoFlow", "GreenCore", "PureDrive", "CleanMotion", "Balance", "BlueFuel", "Phoenix", "Titan", "Vortex", "Eclipse", "Nova", "Zenith",
+            };
+
+            return new Fuel(fuelNames[CustomRandom.Next(fuelNames.Count)],
+                (FuelType)CustomRandom.Next(0, Enum.GetValues(typeof(FuelType)).Length),
+                CustomRandom.Next(45, 52),
+                CustomRandom.Next(50, 60));
+        }
+
+        public static Car GenerateCar()
+        {
+            string licensePlate = GenerateLicensePlate();
+            string name = GenerateCarName();
+            int tankCapacity = GenerateTankCapacity();
+            int tankFullness = GenerateTankFullness(tankCapacity);
+            Fuel fuelType = GenerateFuel();
+
+            return new Car(licensePlate, name, tankCapacity, tankFullness, fuelType);
+        }
+        public static Car[] GenerateCars(int lengthOfCarsArray)
+        {
+            Car[] cars = new Car[lengthOfCarsArray];
+            for (int i = 0; i < lengthOfCarsArray; i++)
+            {
+                cars[i] = GenerateCar();
+            }
+            return cars;
+        }
+    }
+    public class Fuel
     {
         // fields
-        private static int autoInc = 0;
-        private readonly int id;
-        private string title = "";
-        private string author = "";
-        private int year = 0;
-        private bool isAvailable = false;
+        private static int autoInc = 1;
+        public readonly int id = 0;
+        private string _name = "";
+        private FuelType _fuelType;
+        private int _b2b = 0;
+        private int _b2c = 0;
 
         // init
-        public Book(string title, string author, int year, bool isAvailable)
+        public Fuel(string name, FuelType fuelType, int b2b, int b2c)
         {
             this.id = autoInc++;
 
-            setTitle(title);
-            setAuthor(author);
-            setYear(year);
-            setIsAvailable(isAvailable);
+            this.name = name;
+            this.fuelType = fuelType;
+            this.b2b = b2b;
+            this.b2c = b2c;
         }
 
-        // get-set'ters
-        public int getId() => id;
-
-        public string getTitle() => title;
-        public void setTitle(string title)
+        // getset
+        public string name
         {
-            if (title.Trim().Length < 2)
-                throw new Exception("Expected longer title. Entered information is too short.");
-            this.title = title.Trim();
+            get { return _name; }
+            set
+            {
+                if (value.Trim().Length < 2) { throw new Exception("Fuel name has to be at least 2 characters!"); }
+                _name = value.Trim();
+            }
         }
 
-        public string getAuthor() => author;
-        public void setAuthor(string author)
+        public FuelType fuelType
         {
-            if (author.Trim().Length < 3)
-                throw new Exception("Expected longer author's name. Entered information is too short.");
-            this.author = author.Trim();
+            get { return _fuelType; }
+            private set { _fuelType = value; }
         }
 
-        public int getYear() => year;
-        public void setYear(int year)
+        public int b2b
         {
-            if (year > DateTime.Now.Year)
-                throw new Exception("Expected real year. Entered year \"" + year + "\" isn't real yet.");
-            this.year = year;
+            get { return _b2b; }
+            set
+            {
+                if (ValidationHelper.IsPositive(value)) { _b2b = value; }
+                else { throw new Exception("Business price has to be a positive value."); }
+            }
         }
 
-        public bool getIsAvailable() => isAvailable;
-        public void setIsAvailable(bool isAvailable) { this.isAvailable = isAvailable; }
+        public int b2c
+        {
+            get { return _b2c; }
+            set
+            {
+                if (ValidationHelper.IsPositive(value)) { _b2c = value; }
+                else { throw new Exception("Customer price has to be a positive value."); }
+            }
+        }
+
     }
-    public static class LibraryService
+    public class GasStation
     {
         // fields
-        private static List<Book> library = new List<Book>();
-        private static List<Book> userLibrary = new List<Book>();
+        private static int autoInc = 1;
+        private static readonly int maximumFuelStorage = 20000;
+        public readonly int id = 0;
+        private string _name = "";
+        private Dictionary<Fuel, int> _availableFuel = new Dictionary<Fuel, int>();
+        private int _balance = 100000;
+
+        // init
+        public GasStation(string name, Dictionary<Fuel, int> availableFuel)
+        {
+            this.id = autoInc++;
+
+            this.name = name;
+            this.availableFuel = availableFuel;
+        }
+
+        // getset
+        public string name
+        {
+            get { return _name; }
+            set
+            {
+                if (value.Trim().Length < 2) { throw new Exception("Gas station name has to be at least 2 characters!"); }
+                _name = value.Trim();
+            }
+        }
+        public Dictionary<Fuel, int> availableFuel
+        {
+            get { return _availableFuel; }
+            set { _availableFuel = value; }
+        }
+        public int balance
+        {
+            get { return _balance; }
+            private set { _balance = value; }
+        }
 
         // funcs
-        private static void CheckLibraryEmptiness(List<Book> lib)
+        public void Expense(int expense)
         {
-            if (lib.Count == 0)
-                throw new Exception("Library is empty at the moment. Come back later!");
-        }
-        private static void CheckLibraryEmptiness(List<Book> lib, string errorMessage)
-        {
-            if (lib.Count == 0)
-                throw new Exception(errorMessage);
-        }
-        private static void CheckIsIdInRange(List<Book> lib, int id)
-        {
-            if (library.Find(b => b.getId() == id) == null)
-                throw new Exception("Entered ID is out of library's range!");
-        }
-        private static int GetIndexById(List<Book> lib, int id)
-        {
-            CheckLibraryEmptiness(lib);
-            CheckIsIdInRange(lib, id);
-            return lib.FindIndex(book => book.getId() == id);
-        }
-        private static int GetIndexById(List<Book> lib, int id, string errorMessage)
-        {
-            CheckLibraryEmptiness(lib, errorMessage);
-            CheckIsIdInRange(lib, id);
-            return lib.FindIndex(book => book.getId() == id);
-        }
+            if (ValidationHelper.IsNonPositive(expense)) { throw new Exception("Invalid value of expenses. Expense has to be positive."); }
+            if (balance < expense) { throw new Exception("Not enough balance to do expense!"); }
 
-        public static void AddBook(Book book)
-        {
-            if ((library.Find(inLib => inLib.getTitle().ToLower() == book.getTitle().ToLower())) != null)
-                throw new Exception($"{book.getTitle()} by {book.getAuthor()} is already in library!");
-            library.Add(book);
-            Console.WriteLine($"You successfully added {book.getTitle()} by {book.getAuthor()}!");
+            balance -= expense;
         }
-
-        public static void ShowLibraryBooks()
+        public void ReplenishStocks(int id)
         {
-            CheckLibraryEmptiness(library);
-
-            Console.WriteLine("ID   Book");
-            foreach (Book book in library)
+            Fuel fuelById = null;
+            foreach (Fuel fuel in availableFuel.Keys)
             {
-                string availableOrNot = book.getIsAvailable() ? "Available" : "Unavailable";
-                Console.WriteLine($"{book.getId()} | {book.getTitle()} by {book.getAuthor()} ({book.getYear()}) - {availableOrNot}");
+                if (fuel.id == id) { fuelById = fuel; break; }
+            }
+
+            Expense((maximumFuelStorage - availableFuel[fuelById]) * fuelById.b2b);
+            availableFuel[fuelById] = maximumFuelStorage;
+        }
+        public void ShowAvailableFuel()
+        {
+            if (availableFuel.Count == 0) { throw new Exception("There's no available fuel. Come back later!"); }
+
+            Console.WriteLine("ID |   Fuel information");
+            foreach (KeyValuePair<Fuel, int> fuel in availableFuel)
+            {
+                Console.WriteLine($"{fuel.Key.id} | {fuel.Key.name}({fuel.Key.fuelType}), {fuel.Key.b2c}{ConsoleHelper.currency} per liter." +
+                    $" Liters available: {fuel.Value}l.");
             }
         }
-        public static void ShowLibraryBooks(List<Book> lib, string errorMessage)
+        public void RefuelCar(Car car, int liters)
         {
-            CheckLibraryEmptiness(lib, errorMessage);
-
-            Console.WriteLine("ID   Book");
-            foreach (Book book in lib)
+            Fuel fuelInStation = null;
+            foreach (Fuel fuel in availableFuel.Keys)
             {
-                Console.WriteLine($"{book.getId()} | {book.getTitle()} by {book.getAuthor()} ({book.getYear()})");
+                if (fuel.fuelType == car.fuelType.fuelType) { fuelInStation = fuel; break; }
             }
-        }
 
-        public static void LendBook(int id)
-        {
-            int index = GetIndexById(library, id);
+            if (fuelInStation == null) { throw new Exception("Fuel type not found in station"); }
+            if (availableFuel[fuelInStation] < liters) { throw new Exception("Not enough fuel in stock"); }
+            if (liters > car.tankCapacity - car.tankFullness) { throw new Exception("Liters exceed free space in tank"); }
 
-            if (!library[index].getIsAvailable())
-                throw new Exception($"Book, which ID is {id}, is unavailable for now. Come back later!");
-
-            userLibrary.Add(library[index]);
-            library[index].setIsAvailable(false);
-            Console.WriteLine($"You successfully lended {library[index].getTitle()} by {library[index].getAuthor()}!");
-        }
-
-        public static void ReturnBook(int id)
-        {
-            int index = GetIndexById(userLibrary, id, "Your library is empty at the moment. Come back later!");
-
-            if (index == -1)
-                throw new Exception($"There's no book in your library with ID {id}!");
-
-            library[library.FindIndex(book => userLibrary[index].getId() == book.getId())].setIsAvailable(true);
-            Console.WriteLine($"You successfully returned {userLibrary[index].getTitle()} by {userLibrary[index].getAuthor()}!");
-            userLibrary.RemoveAt(index);
-        }
-
-        public static void RemoveBook(int id)
-        {
-            int index = GetIndexById(library, id);
-            Console.WriteLine($"You successfully removed {library[index].getTitle()} by {library[index].getAuthor()}!");
-            library.RemoveAt(index);
+            car.tankFullness += liters;
+            availableFuel[fuelInStation] -= liters;
+            balance += liters * fuelInStation.b2c;
         }
     }
-    */
-    /* public class Product
+    public class Car
     {
         // fields
-        private static int autoInc = 0;
-        private readonly int id;
-        private string name = "";
-        private double price = 0;
-        private uint quantity = 0; // experimental uint
+        private static int autoInc = 1;
+        public readonly int id = 0;
+        private string _licensePlate = "";
+        private string _name = "";
+        private int _tankCapacity = 0;
+        private int _tankFullness = 0;
+        private Fuel _fuelType = null;
 
-        // init 
-        public Product(string name, double price, uint quantity)
+        public Car(string licensePlate, string name, int tankCapacity, int tankFullness, Fuel fuelType)
         {
-            id = autoInc++;
+            this.id = autoInc++;
 
-            setName(name);
-            setPrice(price);
-            setQuantity(quantity);
+            this.licensePlate = licensePlate;
+            this.name = name;
+            this.tankCapacity = tankCapacity;
+            this.tankFullness = tankFullness;
+            this.fuelType = fuelType;
         }
 
-        // getset'ters
-        public int getId() => id;
-
-        public string getName() => name;
-        public void setName(string name)
+        public string licensePlate
         {
-            if (name.Trim().Length < 2)
-                throw new Exception("Expected longer product name. Entered information is too short.");
-            this.name = name.Trim();
-        }
-        public double getPrice() => price;
-        public void setPrice(double price)
-        {
-            if (price < 0)
-                throw new Exception("Expected real price. Entered information is impossible to be price.");
-            this.price = Math.Round(price, 2);        
-        }
-
-        public uint getQuantity() => quantity;
-        public void setQuantity(uint quantity) { this.quantity = quantity; }
-    }
-    public static class ProductsService
-    {
-        // fields
-        private static List<Product> products = new List<Product>();
-
-        // funcs
-        private static void CheckProductsEmptiness()
-        {
-            if (products.Count == 0)
-                throw new Exception("Products list is empty at the moment. Come back later!");
-        }
-        private static int GetIndexById(int id)
-        {
-            CheckProductsEmptiness();
-            CheckIsIdInProducts(id);
-
-            return products.FindIndex(product => product.getId() == id);
-        }
-        public static void CheckIsIdInProducts(int id)
-        {
-            if (products.Find(p => p.getId() == id) == null)
-                throw new Exception("Entered ID is out of products list's range!");
-        }
-        public static void AddProduct(Product product)
-        {
-            if ((products.Find(prdct => prdct.getName().ToLower() == product.getName().ToLower())) != null)
-                throw new Exception($"{product.getName()} is already in products list!");
-            products.Add(product);
-            Console.WriteLine($"You successfully added {product.getName()} for {product.getPrice()}!");
-        }
-        public static void ShowAllProducts()
-        {
-            CheckProductsEmptiness();
-
-            Console.WriteLine("ID Product");
-            foreach (Product product in products)
+            get { return _licensePlate; }
+            set
             {
-                Console.WriteLine($"{product.getId()} | {product.getName()} for {product.getPrice()} - {product.getQuantity()} pcs.");
+                if (value.Trim().Length < 8) { throw new Exception("Invalid license plate!"); }
+                if (Regex.IsMatch(value.Trim(), @"^[A-Z]{2}\d{4}[A-Z]{2}$"))
+                {
+                    _licensePlate = value.Trim();
+                }
             }
         }
-        public static void UpdateProduct(int id, double price) { products[GetIndexById(id)].setPrice(price); }
-        public static void UpdateProduct(int id, uint quantity) { products[GetIndexById(id)].setQuantity(quantity); }
-        public static void UpdateProduct(int id, double price, uint quantity)
+        public string name
         {
-            UpdateProduct(id, price);
-            UpdateProduct(id, quantity);
-        }
-
-        public static void RemoveProduct(int id) { products.RemoveAt(GetIndexById(id)); }
-        public static void FindProduct(string str)
-        {
-            CheckProductsEmptiness();
-            List<Product> found = products.FindAll(product => product.getName().ToLower().Contains(str.ToLower()));
-            if (found.Count == 0)
-                throw new Exception($"Nothing found in products list by request {str}!");
-            Console.WriteLine("ID   Found product");
-            foreach (Product p in found)
+            get { return _name; }
+            set
             {
-                Console.WriteLine($"{p.getId()} | {p.getName()} for {p.getPrice()} - {p.getQuantity()} pcs.");
+                if (value.Trim().Length < 2) { throw new Exception("Car name has to be at least 2 characters!"); }
+                _name = value.Trim();
             }
         }
-        public static void BuyProduct(int id, double budget)
+        public int tankCapacity
         {
-            int index = GetIndexById(id);
-
-            if (products[index].getQuantity() < Convert.ToUInt32(budget / products[index].getPrice()))
-                throw new Exception("Not enough products to sell!");
-
-            Console.WriteLine($"You successfully bought {products[index].getName()} for {products[index].getPrice()}/pcs. " +
-                $"in the amount of {Convert.ToUInt32(budget / products[index].getPrice())}");
-            Console.WriteLine($"Your rest: {budget - Convert.ToUInt32(budget / products[index].getPrice()) * products[index].getPrice()}");
-            UpdateProduct(id, (products[index].getQuantity() - Convert.ToUInt32(budget / products[index].getPrice())));
-
+            get { return _tankCapacity; }
+            set
+            {
+                if (ValidationHelper.IsNonPositive(value)) { throw new Exception("Tank capacity has to be positive."); }
+                _tankCapacity = value;
+            }
         }
-
-
+        public int tankFullness
+        {
+            get { return _tankFullness; }
+            set
+            {
+                if (ValidationHelper.IsNonPositive(value)) { throw new Exception("Current tank fullness has to be positive."); }
+                _tankFullness = value;
+            }
+        }
+        public Fuel fuelType
+        {
+            get { return _fuelType; }
+            set
+            {
+                _fuelType = value;
+            }
+        }
     }
-    */ 
     internal class Program
     {
         static void Main(string[] args)
         {
-            Console.OutputEncoding = Encoding.UTF8;
-            Console.InputEncoding = Encoding.Unicode;
-
-            // куча ексепшенів обумовлена тим, що інтерфейси програм повинні бути зацикленим трай-кечами
-            // (але я облінився їх робить)
-
-            // 1.
-            // from 54 to 200
-
-            // 2.
-            /*
             try
             {
-                ProductsService.AddProduct(new Product("Laptop", 12999.00, 34));
-                ProductsService.AddProduct(new Product("Smartphone", 8967.00, 78));
-                ProductsService.AddProduct(new Product("Powerbank", 1270.00, 12));
-                ConsoleHelper.ShowSeparator();
-
-                ProductsService.ShowAllProducts();
-                ConsoleHelper.ShowSeparator();
-
-                int choosenId = ConsoleHelper.IntegerLineInput("Which product are you interested in? ID: ");
-                ProductsService.CheckIsIdInProducts(choosenId);
-
-                double budget = Convert.ToDouble(ConsoleHelper.IntegerLineInput("Your budget: "));
-                if (budget <= 0)
-                    throw new Exception("Expected real budget. Entered budget doesn't seem to be real!");
-
-                ProductsService.BuyProduct(choosenId, budget);
-                ConsoleHelper.ShowSeparator();
-                ProductsService.ShowAllProducts();
-
+                GasStation gasStation = new GasStation("Gas4Ya",
+                    new Dictionary<Fuel, int> { { new Fuel("Fuel1", FuelType.A95, 45, 60), 20000 }, 
+                        { new Fuel("Fuel2", FuelType.A100, 45, 60), 20000 },
+                        { new Fuel("Fuel3", FuelType.Diesel, 45, 60), 20000 },
+                        { new Fuel("Fuel4", FuelType.Gas, 45, 60), 20000 }
+                    }); 
+                Car car = CarGenerator.GenerateCar();
+                gasStation.RefuelCar(car, 10);
             }
-            catch (FormatException)
+            catch (NullReferenceException)
             {
-                ConsoleHelper.ShowError("Incorrect input format!");
+                ConsoleHelper.ShowError("Null can't be a valid value here!");
             }
             catch (Exception ex)
             {
                 ConsoleHelper.ShowError(ex.Message);
             }
-            */
         }
     }
 }
