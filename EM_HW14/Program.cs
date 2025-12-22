@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -59,7 +58,7 @@ namespace EM_HW14
         public static bool IsNegative(int value) { return value < 0; }
         public static bool IsNonPositive(int value) { return value <= 0; }
         public static bool IsNonNegative(int value) { return value >= 0; }
-        public static void NullOrNot<T>(T value)
+        public static void CheckForNull<T>(T value)
         {
             if (value == null) { throw new NullReferenceException("Null can't be a value here."); }
         }
@@ -98,9 +97,9 @@ namespace EM_HW14
                 "Model X", "M5 F90", "Civic Type R", "Corolla GR", "Octavia RS", "Mustang GT", "Charger SRT", "Camry TRD", "Aventador SVJ", "Huracan EVO",
                 "911 Carrera", "Panamera GTS", "F-150 Raptor", "Ranger Raptor", "G63 AMG", "GLE 63 S", "Taycan Turbo", "i8 Roadster", "Supra A90",
                 "Stelvio Quadrifoglio", "Giulia Veloce", "Bronco Wildtrak", "Tucson N-Line", "Elantra N", "Veloster N", "Cayenne Turbo", "Macan GTS",
-                "X5 M", "X6 M", "M4 Competition", "M2 CS", "RS6 Avant", "RS7 Sportback", "S63 AMG", "E63 S", "Mustang Mach 1", "Camaro SS", 
-                "Challenger R/T", "Wrangler Rubicon", "Defender 110", "G-Class 63", "A4 Avant", "A6 Allroad", "Q8", "Touareg R", 
-                "XC90 T8", "Polestar 2", "Model 3 Performance", "Roadster 2023" 
+                "X5 M", "X6 M", "M4 Competition", "M2 CS", "RS6 Avant", "RS7 Sportback", "S63 AMG", "E63 S", "Mustang Mach 1", "Camaro SS",
+                "Challenger R/T", "Wrangler Rubicon", "Defender 110", "G-Class 63", "A4 Avant", "A6 Allroad", "Q8", "Touareg R",
+                "XC90 T8", "Polestar 2", "Model 3 Performance", "Roadster 2023"
             };
 
             return carNames[CustomRandom.Next(carNames.Count)];
@@ -117,7 +116,7 @@ namespace EM_HW14
         {
             List<string> fuelNames = new List<string>()
             {
-                "Ignite", "Pulse", "Velocity", "Overdrive", "Momentum", "Kinetic", "Afterburn", "Throttle", "Boost", "PowerFlow", "PrimeFuel", 
+                "Ignite", "Pulse", "Velocity", "Overdrive", "Momentum", "Kinetic", "Afterburn", "Throttle", "Boost", "PowerFlow", "PrimeFuel",
                 "UltraFuel", "Elite", "Supreme", "Apex", "Vertex", "Summit", "Infinity", "Noble", "NeoFuel", "HyperFuel", "Quantum", "Flux", "Ion",
                 "Plasma", "Core", "Fusion", "PulseX", "Rapid", "Storm", "Blaze", "Ignition", "Rush", "VelocityX", "Fireline", "Redline", "Fastlane",
                 "EcoFlow", "GreenCore", "PureDrive", "CleanMotion", "Balance", "BlueFuel", "Phoenix", "Titan", "Vortex", "Eclipse", "Nova", "Zenith",
@@ -218,6 +217,8 @@ namespace EM_HW14
         private Dictionary<Fuel, int> _availableFuel = new Dictionary<Fuel, int>();
         private int _balance = 100000;
 
+        private List<Log> _logs = new List<Log>(); // TODO
+
         // init
         public GasStation(string name, Dictionary<Fuel, int> availableFuel)
         {
@@ -280,19 +281,102 @@ namespace EM_HW14
         }
         public void RefuelCar(Car car, int liters)
         {
+            if (ValidationHelper.IsNonPositive(liters)) { throw new Exception("Invalid liters value. Has to be a positive number."); }
+
             Fuel fuelInStation = null;
             foreach (Fuel fuel in availableFuel.Keys)
             {
                 if (fuel.fuelType == car.fuelType.fuelType) { fuelInStation = fuel; break; }
             }
 
-            if (fuelInStation == null) { throw new Exception("Fuel type not found in station"); }
-            if (availableFuel[fuelInStation] < liters) { throw new Exception("Not enough fuel in stock"); }
-            if (liters > car.tankCapacity - car.tankFullness) { throw new Exception("Liters exceed free space in tank"); }
+            if (fuelInStation == null) { throw new Exception("Fuel type hasn't found in station."); }
+            if (availableFuel[fuelInStation] < liters) { throw new Exception("Not enough fuel in stock, come back later."); }
+            if (liters > car.tankCapacity - car.tankFullness) { throw new Exception("Liters exceed free space in tank."); }
 
             car.tankFullness += liters;
             availableFuel[fuelInStation] -= liters;
             balance += liters * fuelInStation.b2c;
+            _logs.Add(new Log(car.fuelType, liters, car.licensePlate));
+        }
+        private void CheckLogs()
+        {
+            if (_logs.Count == 0) { throw new Exception("Logs are empty for now, check later."); }
+            Console.WriteLine("ID  |  Date  | Information ");
+            foreach (Log log in _logs)
+            {
+                log.ShowLogInfo();
+            }
+        }
+        public void AuthorizationForLogs(string userLogin, string userPassword)
+        {
+            const string login = "admin";
+            const string password = "admin";
+
+            if (userLogin != login || userPassword != password) { throw new Exception("Incorrect login information."); }
+            CheckLogs();
+        }
+
+        class Log
+        {
+            // fields
+            private static int autoInc = 1;
+            public readonly int id = 0;
+            private Fuel _fuelType = null;
+            private int _pouredLiters = 0;
+            private string _licensePlate = "";
+            private DateTime _pouredAt = DateTime.Now;
+
+            // init
+            public Log(Fuel fuelType, int pouredLiters, string licensePlate)
+            {
+                id = autoInc++;
+
+                this.fuelType = fuelType;
+                this.pouredLiters = pouredLiters;
+                this.licensePlate = licensePlate;
+            }
+
+            // getset
+            public Fuel fuelType
+            {
+                get { return _fuelType; }
+                private set { _fuelType = value; }
+            }
+            public int pouredLiters
+            {
+                get { return _pouredLiters; }
+                private set
+                {
+                    if (ValidationHelper.IsNonPositive(value)) { throw new Exception("Poured liters value has to be a positive number."); }
+                    _pouredLiters = value;
+                }
+            }
+            public string licensePlate
+            {
+                get { return _licensePlate; }
+                private set
+                {
+                    if (value.Trim().Length != 8) { throw new Exception("Invalid license plate!"); }
+                    if (Regex.IsMatch(value.Trim(), @"^[A-Z]{2}\d{4}[A-Z]{2}$"))
+                    {
+                        _licensePlate = value.Trim();
+                    }
+                }
+            }
+            public DateTime pouredAt
+            {
+                get { return _pouredAt; }
+            }
+
+            // funcs
+
+            public void ShowLogInfo()
+            {
+                ValidationHelper.CheckForNull(fuelType);
+                ValidationHelper.CheckForNull(licensePlate);
+
+                Console.WriteLine($"{id} | {pouredAt.ToString("g")} | {licensePlate} poured {pouredLiters} liters of {fuelType.name}({fuelType.fuelType}).");
+            }
         }
     }
     public class Car
@@ -322,7 +406,7 @@ namespace EM_HW14
             get { return _licensePlate; }
             set
             {
-                if (value.Trim().Length < 8) { throw new Exception("Invalid license plate!"); }
+                if (value.Trim().Length != 8) { throw new Exception("Invalid license plate!"); }
                 if (Regex.IsMatch(value.Trim(), @"^[A-Z]{2}\d{4}[A-Z]{2}$"))
                 {
                     _licensePlate = value.Trim();
