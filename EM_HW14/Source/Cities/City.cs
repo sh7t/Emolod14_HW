@@ -15,17 +15,18 @@ namespace EM_HW14.Source.Cities
         protected Dictionary<ResourceType, int> resources = new Dictionary<ResourceType, int>();
         private string _name = "";
         private int _size = 0;
-        private List<Building> _buildings = new List<Building>();
+        private List<Building> _buildings;
         private int _population = 10;
         private int _populationGrowth = 0;
 
         // init
-        public City(string name, CitySize size)
+        public City(string name, CitySize size, List<Building> buildings = null)
         {
             this.id = autoInc++;
             //
             this.name = name.Trim();
             this.size = (int)size;
+            _buildings = buildings ?? new List<Building>();
             //
             this.InitializeResources();
         }

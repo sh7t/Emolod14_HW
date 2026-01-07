@@ -7,16 +7,15 @@ using EM_HW14.Source.Utils;
 
 namespace EM_HW14.Source.Countries
 {
-    public abstract class Country
+    public class Country
     {
         // fields
         private static int autoInc = 1;
         public readonly int id = 0;
+        protected Dictionary<ResourceType, int> resources = new Dictionary<ResourceType, int>();
         protected string _name = "";
         protected GovernmentType _governmentType;
-        protected Dictionary<ResourceType, int> _resources = new Dictionary<ResourceType, int>();
         protected List<City> _cities = new List<City>();
-        protected double _money = 0;
 
 
         // init
@@ -45,22 +44,13 @@ namespace EM_HW14.Source.Countries
             get { return _governmentType; }
             set { _governmentType = value; }
         }
-        public Dictionary<ResourceType, int> resources
-        {
-            get { return _resources; }
-        }
         public List<City> cities
         {
             get { return _cities; }
         }
         public double money
         {
-            get { return _money; }
-            set
-            {
-                if (ValidationHelper.IsNegative(value)) { throw new Exception("Happiness value can't be negative."); }
-                _money = value;
-            }
+            get { return GetResourceQuantity(ResourceType.Money); }
         }
 
         // funcs
