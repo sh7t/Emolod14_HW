@@ -45,9 +45,25 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Source\Buildings\Building.cs" />
+    <Compile Include="Source\Buildings\Children\Mine.cs" />
+    <Compile Include="Source\Buildings\Children\Factory.cs" />
+    <Compile Include="Source\Buildings\Children\Museum.cs" />
+    <Compile Include="Source\Buildings\Children\Theatre.cs" />
+    <Compile Include="Source\Buildings\Children\Bank.cs" />
+    <Compile Include="Source\Buildings\Children\Market.cs" />
+    <Compile Include="Source\Buildings\Children\Farm.cs" />
+    <Compile Include="Source\Cities\City.cs" />
+    <Compile Include="Source\Countries\Country.cs" />
+    <Compile Include="Source\Utils\ConsoleHelper.cs" />
+    <Compile Include="Source\Utils\CustomRandom.cs" />
+    <Compile Include="Source\Utils\ValidationHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Source\Generators\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
