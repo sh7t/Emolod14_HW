@@ -8,28 +8,8 @@ using System.Collections.Generic;
 
 namespace EM_HW14
 {
-    public enum ResourceType
-    {
-        Straw = 0,
-        Stick,
-        Brick,
-        Food,
-        Money,
-        Taxes,
-        Happiness,
-    }
-    public enum CitySize
-    {
-        Small = 12,
-        Medium = 20,
-        Large = 36,
-    }
-    public enum GovernmentType
-    {
-        Monarchy = 0,
-        Democracy,
-        Dictatorship
-    }
+    
+    
 
     internal class Program
     {

@@ -55,6 +55,7 @@
     <Compile Include="Source\Buildings\Children\Farm.cs" />
     <Compile Include="Source\Cities\City.cs" />
     <Compile Include="Source\Countries\Country.cs" />
+    <Compile Include="Source\Services\ResourceManager.cs" />
     <Compile Include="Source\Utils\ConsoleHelper.cs" />
     <Compile Include="Source\Utils\CustomRandom.cs" />
     <Compile Include="Source\Utils\ValidationHelper.cs" />
@@ -62,8 +63,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Source\Generators\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

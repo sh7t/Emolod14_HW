@@ -3,21 +3,38 @@ using EM_HW14.Source.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EM_HW14.Source.Services;
 
 namespace EM_HW14.Source.Cities
 {
-    
+    public enum ResourceType
+    {
+        Food = 1,
+        Money,
+        Taxes,
+        Happiness,
+    }
+    public enum CitySize
+    {
+        Small = 12,
+        Medium = 20,
+        Large = 36,
+    }
     public class City
     {
         // fields
         private static int autoInc = 1;
         public readonly int id = 0;
-        protected Dictionary<ResourceType, int> resources = new Dictionary<ResourceType, int>();
-        private string _name = "";
-        private int _size = 0;
-        private List<Building> _buildings;
-        private int _population = 10;
-        private int _populationGrowth = 0;
+        protected ResourceManager resourceManager;
+        protected string _name = "";
+        protected int _buildingSlots = 0;
+        protected CitySize _citySize;
+        protected List<Building> _buildings;
+        protected int _population = 100000;
+        protected int _populationGrowth = 0;
+
+        protected const int MONEY_INCOME = 10;
+        protected const int HAPPINESS_EXPENDITURE = -10;
 
         // init
         public City(string name, CitySize size, List<Building> buildings = null)
@@ -25,10 +42,11 @@ namespace EM_HW14.Source.Cities
             this.id = autoInc++;
             //
             this.name = name.Trim();
-            this.size = (int)size;
+            _citySize = size;
+            buildingSlots = (int)size;
             _buildings = buildings ?? new List<Building>();
             //
-            this.InitializeResources();
+            resourceManager = new ResourceManager();
         }
 
         // getset
@@ -41,13 +59,13 @@ namespace EM_HW14.Source.Cities
                 _name = value.Trim();
             }
         }
-        public int size
+        public int buildingSlots
         {
-            get { return this._size; }
+            get { return this._buildingSlots; }
             protected set
             {
                 if (!Enum.IsDefined(typeof(CitySize), value)) { throw new Exception("Undefined city size."); }
-                this._size = value;
+                this._buildingSlots = value;
             }
         }
         public List<Building> buildings
@@ -76,86 +94,52 @@ namespace EM_HW14.Source.Cities
         {
             get { return this.buildings.Count; }
         }
-        public int happiness
-        {
-            get { return GetResourceQuantity(ResourceType.Happiness); }
-        }
-        public int food
-        {
-            get { return GetResourceQuantity(ResourceType.Food); }
-        }
-        public int tax
-        {
-            get { return GetResourceQuantity(ResourceType.Taxes); }
-        }
 
         // funcs
         public void AddSize(int size)
         {
             if (ValidationHelper.IsNonPositive(size)) { throw new Exception("Added size must be greater than zero."); }
-            this.size += size;
-        }
-        public int GetResourceQuantity(ResourceType type)
-        {
-            return this.resources[type];
+            this._buildingSlots += size;
         }
         public void AddResource(ResourceType type, int quantity)
         {
-            resources[type] = Math.Max(0, resources[type] + quantity);
-        }
-
-        private void InitializeResources()
-        {
-            foreach (ResourceType type in Enum.GetValues(typeof(ResourceType)))
-            {
-                resources[type] = 0;
-            }
-        }
-        private void MergeResources(Dictionary<ResourceType, int> resources)
-        {
-            foreach (KeyValuePair<ResourceType, int> resource in resources)
-            {
-                AddResource(resource.Key, resource.Value);
-            }
+            resourceManager.AddResource(type, quantity);
         }
         public void ProduceResources()
         {
-            foreach (Building building in buildings) { MergeResources(building.Produce()); }
+            foreach (Building building in buildings) { resourceManager.MergeResources(building.Produce()); }
         }
         public void Build(Building building)
         {
             if (this.buildings.Any(bldng => bldng.id == building.id)) { throw new Exception("Building is already exist."); }
-            if (this.buildingCount >= this.size) { throw new Exception("Not enough space for building."); }
+            if (this.buildingCount >= this.buildingSlots) { throw new Exception("Not enough space for building."); }
             this.buildings.Add(building);
         }
-        public bool ConsumeFood()
+        public bool ConsumeFood(ResourceManager resourceManager)
         {
-            const int MONEY_INCOME = 10;
-            const int HAPPINESS_EXPENDITURE = -10;
-
             int required = Math.Max(1, population / 1000);
 
-            if (required > GetResourceQuantity(ResourceType.Food))
+            if (required > resourceManager.GetResourceQuantity(ResourceType.Food))
             {
-                AddResource(ResourceType.Happiness, HAPPINESS_EXPENDITURE);
+                this.resourceManager.AddResource(ResourceType.Happiness, HAPPINESS_EXPENDITURE);
                 return false;
             }
-            AddResource(ResourceType.Food, -required);
-            AddResource(ResourceType.Money, MONEY_INCOME * required);
+            resourceManager.AddResource(ResourceType.Food, -required);
+            this.resourceManager.AddResource(ResourceType.Money, MONEY_INCOME * required);
             return true;
         }
-        public void GrowPopulation()
+        public void GrowPopulation(ResourceManager resourceManager)
         {
-            if (ConsumeFood() && ValidationHelper.IsPositive(happiness))
+            if (ConsumeFood(resourceManager) && ValidationHelper.IsPositive(this.resourceManager.happiness))
             {
-                population += (population * happiness / 100) / 10;
+                population += (population * this.resourceManager.happiness / 100) / 10;
             }
         }
         public void CollectTaxes()
         {
-            if (ValidationHelper.IsPositive(happiness))
+            if (ValidationHelper.IsPositive(resourceManager.happiness))
             {
-                AddResource(ResourceType.Money, (population / 1000) * 10 * tax / 100);
+                resourceManager.AddResource(ResourceType.Money, (population / 1000) * 10 * resourceManager.tax / 100);
             }
             return;
         }
@@ -167,17 +151,14 @@ namespace EM_HW14.Source.Cities
 
             Dictionary<ResourceType, int> returnable = new Dictionary<ResourceType, int>();
             List<ResourceType> retunableTypes = new List<ResourceType>() {
-                ResourceType.Straw,
-                ResourceType.Stick,
-                ResourceType.Brick,
                 ResourceType.Food,
                 ResourceType.Money
             };
 
             foreach (ResourceType retunableType in retunableTypes)
             {
-                returnable[retunableType] = resources[retunableType];
-                AddResource(retunableType, -resources[retunableType]);
+                returnable[retunableType] = resourceManager.resources[retunableType];
+                resourceManager.AddResource(retunableType, -resourceManager.resources[retunableType]);
             }
 
             return returnable;

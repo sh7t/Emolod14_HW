@@ -1,21 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Xml.Schema;
+using System.Linq;
 using EM_HW14.Source.Cities;
+using EM_HW14.Source.Services;
 using EM_HW14.Source.Utils;
 
 namespace EM_HW14.Source.Countries
 {
+    public enum GovernmentType
+    {
+        Monarchy = 1,
+        Democracy,
+        Dictatorship
+    }
     public class Country
     {
         // fields
         private static int autoInc = 1;
         public readonly int id = 0;
-        protected Dictionary<ResourceType, int> resources = new Dictionary<ResourceType, int>();
+        protected ResourceManager resourceManager;
         protected string _name = "";
         protected GovernmentType _governmentType;
         protected List<City> _cities = new List<City>();
+
+        protected const int MONARCHY_BONUS = 10;
+        protected const int DEMOCRACY_BONUS = 10;
+        protected const int DICTATORSHIP_BONUS = 20;
 
 
         // init
@@ -26,7 +36,7 @@ namespace EM_HW14.Source.Countries
             this.name = name;
             this.governmentType = governmentType;
             //
-            InitializeResources();
+            resourceManager = new ResourceManager();
         }
 
         // getset
@@ -42,7 +52,7 @@ namespace EM_HW14.Source.Countries
         public GovernmentType governmentType
         {
             get { return _governmentType; }
-            set { _governmentType = value; }
+            protected set { _governmentType = value; }
         }
         public List<City> cities
         {
@@ -56,59 +66,57 @@ namespace EM_HW14.Source.Countries
         // funcs
         public int GetResourceQuantity(ResourceType type)
         {
-            return this.resources[type];
-        }
-        public void AddResource(ResourceType type, int quantity)
-        {
-            resources[type] = Math.Max(0, resources[type] + quantity);
-        }
-
-        private void InitializeResources()
-        {
-            foreach (ResourceType type in Enum.GetValues(typeof(ResourceType)))
-            {
-                resources[type] = 0;
-            }
-        }
-        private void MergeResources(Dictionary<ResourceType, int> resources)
-        {
-            foreach (KeyValuePair<ResourceType, int> resource in resources)
-            {
-                AddResource(resource.Key, resource.Value);
-            }
+            return resourceManager.GetResourceQuantity(type);
         }
         public void AddCity(City city)
         {
-            if (cities.Contains(city)) { throw new Exception($"City already exists in {this.name}"); }
-            
-            switch (governmentType)
-            {
-                case GovernmentType.Monarchy:
-                    city.AddResource(ResourceType.Taxes, 10);
-                    break;
-                case GovernmentType.Democracy:
-                    city.AddSize(10);
-                    break;
-                case GovernmentType.Dictatorship:
-                    city.AddResource(ResourceType.Happiness, 20);
-                    break;
-            }
+            if (cities.Any(c => c.id == city.id)) { throw new Exception($"City already exists in {name}"); }
+            ApplyGovernmentEffects(governmentType, 1);
             cities.Add(city);
         }
 
+        public void ChangeGovernmentType(GovernmentType governmentType)
+        {
+            if (this.governmentType == governmentType) { throw new Exception($"Country {name} is already {this.governmentType.ToString()}"); }
+
+            ApplyGovernmentEffects(this.governmentType, -1);
+            ApplyGovernmentEffects(governmentType, 1);
+            
+            this.governmentType = governmentType;
+        }
+
+        private void ApplyGovernmentEffects(GovernmentType governmentType, int multiplier)
+        {
+            foreach (City city in cities)
+            {
+                switch (governmentType)
+                {
+                    case GovernmentType.Monarchy:
+                        city.AddResource(ResourceType.Taxes,MONARCHY_BONUS * multiplier);
+                        break;
+
+                    case GovernmentType.Democracy:
+                        city.AddSize(DEMOCRACY_BONUS * multiplier);
+                        break;
+
+                    case GovernmentType.Dictatorship:
+                        city.AddResource(ResourceType.Happiness,DICTATORSHIP_BONUS * multiplier);
+                        break;
+                }
+            }
+        }
         public void CollectResources()
         {
             foreach (City city in cities)
             {
-                Dictionary<ResourceType, int> collected = city.ReturnResources();
-                MergeResources(collected);
+                resourceManager.MergeResources(city.ReturnResources());
             }
         }
         public void MonthlyCycle()
         {
             foreach (City city in cities)
             {
-                city.GrowPopulation();
+                city.GrowPopulation(resourceManager);
             }
             CollectResources();
         }
