@@ -3,9 +3,14 @@ using EM_HW14.Source.Utils;
 using System;
 using System.Collections.Generic;
 
-namespace EM_HW14.Source.Buildings
+namespace EM_HW14.Source.LifeInCountry.Buildings
 {
-    public abstract class Building
+    public interface IResourceProducer
+    {
+        Dictionary<ResourceType, int> Produce();
+    }
+
+    public abstract class Building : IResourceProducer
     {
         // fields
         private static int autoInc = 1;

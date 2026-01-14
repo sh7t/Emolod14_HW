@@ -1,9 +1,9 @@
 ﻿using EM_HW14.Source.Cities;
 using System.Collections.Generic;
 
-namespace EM_HW14.Source.Buildings.Children
+namespace EM_HW14.Source.LifeInCountry.Buildings.Children
 {
-    public class Museum : Building
+    public class Museum : Building, IResourceProducer
     {
         // init
         public Museum(string name) : base(name)

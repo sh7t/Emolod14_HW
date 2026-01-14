@@ -1,10 +1,11 @@
-﻿using EM_HW14.Source.Buildings;
-using EM_HW14.Source.Buildings.Children;
+﻿using EM_HW14.Source.LifeInCountry.Buildings;
+using EM_HW14.Source.LifeInCountry.Buildings.Children;
 using EM_HW14.Source.Cities;
 using EM_HW14.Source.Countries;
 using EM_HW14.Source.Utils;
 using System;
 using System.Collections.Generic;
+using EM_HW14.Source.IDevices.Devices;
 
 namespace EM_HW14
 {
@@ -13,10 +14,37 @@ namespace EM_HW14
 
     internal class Program
     {
+        public interface IConnectableDevice
+        {
+            void Connect();
+            void Disconnect();
+        }
+
+        public static void TestConnection(IConnectableDevice device)
+        {
+            Console.WriteLine("TEST");
+            device.Connect();
+            device.Disconnect();
+            Console.WriteLine("ENDTEST");
+        }
+        
         static void Main(string[] args)
         {
             try
             {
+                // 1.
+                List<IConnectableDevice> devices = new List<IConnectableDevice >()
+                {
+                    new Smartphone(),
+                    new BluetoothSpeaker(),
+                    new USBStorageDevice()
+                };
+                foreach (IConnectableDevice device in devices)
+                {
+                    TestConnection(device);
+                }
+                
+                // 2.
                 Country country = new Country("Kauntri", GovernmentType.Monarchy);
 
                 country.AddCity(new City("Atlanta", CitySize.Small, new List<Building>() { new Theatre("Opera House") }));
