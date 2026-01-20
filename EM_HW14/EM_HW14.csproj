@@ -45,20 +45,14 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Source\IDevices\Devices\BluetoothSpeaker.cs" />
-    <Compile Include="Source\IDevices\Devices\Smartphone.cs" />
-    <Compile Include="Source\IDevices\Devices\USBStorageDevice.cs" />
-    <Compile Include="Source\LifeInCountry\Buildings\Building.cs" />
-    <Compile Include="Source\LifeInCountry\Buildings\Children\Bank.cs" />
-    <Compile Include="Source\LifeInCountry\Buildings\Children\Factory.cs" />
-    <Compile Include="Source\LifeInCountry\Buildings\Children\Farm.cs" />
-    <Compile Include="Source\LifeInCountry\Buildings\Children\Market.cs" />
-    <Compile Include="Source\LifeInCountry\Buildings\Children\Mine.cs" />
-    <Compile Include="Source\LifeInCountry\Buildings\Children\Museum.cs" />
-    <Compile Include="Source\LifeInCountry\Buildings\Children\Theatre.cs" />
-    <Compile Include="Source\LifeInCountry\Cities\City.cs" />
-    <Compile Include="Source\LifeInCountry\Countries\Country.cs" />
-    <Compile Include="Source\LifeInCountry\Services\ResourceManager.cs" />
+    <Compile Include="Source\CustomStackXrsice\Base\LimitedStack.cs" />
+    <Compile Include="Source\CustomStackXrsice\Exception\LimitedStackException.cs" />
+    <Compile Include="Source\TypeShop\Base\Checkout.cs" />
+    <Compile Include="Source\TypeShop\Base\Product.cs" />
+    <Compile Include="Source\TypeShop\Base\Receipt.cs" />
+    <Compile Include="Source\TypeShop\Products\Book.cs" />
+    <Compile Include="Source\TypeShop\Products\Detail.cs" />
+    <Compile Include="Source\TypeShop\Products\Grocery.cs" />
     <Compile Include="Source\Utils\ConsoleHelper.cs" />
     <Compile Include="Source\Utils\CustomRandom.cs" />
     <Compile Include="Source\Utils\ValidationHelper.cs" />
@@ -66,8 +60,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Source\LifeInCountry\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

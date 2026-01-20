@@ -34,7 +34,11 @@ namespace EM_HW14.Source.Utils
         }
         public static void ShowError(string message)
         {
-            Console.WriteLine("Error: " + message);
+            Console.WriteLine("Error occured: " + message);
+        }
+        public static void ShowLimitedStackError(string message)
+        {
+            Console.WriteLine("Limited stack's error occured: " + message);
         }
         public static void ShowSeparator()
         {
